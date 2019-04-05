@@ -26,7 +26,7 @@ from cloudbaseinit.osutils import factory as osutils_factory
 
 
 LOG = oslo_logging.getLogger(__name__)
-MAX_URL_CHECK_RETRIES = 3
+MAX_URL_CHECK_RETRIES = 100
 
 
 def get_local_ip(address=None):
