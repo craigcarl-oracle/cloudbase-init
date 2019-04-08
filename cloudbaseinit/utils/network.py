@@ -27,7 +27,7 @@ from cloudbaseinit.osutils import factory as osutils_factory
 
 
 LOG = oslo_logging.getLogger(__name__)
-MAX_URL_CHECK_RETRIES = 100
+MAX_URL_CHECK_RETRIES = 30
 RETRY_DELAY_SEC = 10
 
 
@@ -46,7 +46,9 @@ def check_url(url, retries_count=MAX_URL_CHECK_RETRIES):
         except Exception:
             LOG.debug("Failed to connect to url, retrying in %s seconds."
                       % RETRY_DELAY_SEC)
-            time.sleep(RETRY_DELAY_SEC)
+            wait_until = time.clock() + RETRY_DELAY_SEC
+            while time.clock() < wait_until:
+                pass
             pass
     return False
 
