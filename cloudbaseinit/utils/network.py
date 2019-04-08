@@ -16,6 +16,7 @@
 import binascii
 import socket
 import struct
+import time
 import sys
 
 from oslo_log import log as oslo_logging
@@ -27,6 +28,7 @@ from cloudbaseinit.osutils import factory as osutils_factory
 
 LOG = oslo_logging.getLogger(__name__)
 MAX_URL_CHECK_RETRIES = 100
+RETRY_DELAY_SEC = 10
 
 
 def get_local_ip(address=None):
@@ -42,6 +44,9 @@ def check_url(url, retries_count=MAX_URL_CHECK_RETRIES):
             request.urlopen(url)
             return True
         except Exception:
+            LOG.debug("Failed to connect to url, retrying in %s seconds."
+                      % RETRY_DELAY_SEC)
+            time.sleep(RETRY_DELAY_SEC)
             pass
     return False
 
