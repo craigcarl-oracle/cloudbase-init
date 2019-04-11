@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import time
 from oslo_log import log as oslo_logging
 from six.moves.urllib import error
 
@@ -26,6 +27,8 @@ LOG = oslo_logging.getLogger(__name__)
 
 class HttpService(base.BaseHTTPMetadataService, baseos.BaseOpenStackService):
     _POST_PASSWORD_MD_VER = '2013-04-04'
+    _MAX_META_DATA_GET_RETRIES = 30
+    _RETRY_DELAY_SEC = 10
 
     def __init__(self):
         super(HttpService, self).__init__(
@@ -39,13 +42,21 @@ class HttpService(base.BaseHTTPMetadataService, baseos.BaseOpenStackService):
         if CONF.openstack.add_metadata_private_ip_route:
             network.check_metadata_ip_route(CONF.openstack.metadata_base_url)
 
-        try:
-            self._get_meta_data()
-            return True
-        except Exception:
-            LOG.debug('Metadata not found at URL \'%s\'' %
-                      CONF.openstack.metadata_base_url)
-            return False
+        for i in range(0, self._MAX_META_DATA_GET_RETRIES):
+            try:
+                self._get_meta_data()
+                LOG.debug('Metadata found at URL \'%s\'' %
+                          CONF.openstack.metadata_base_url)
+                return True
+            except Exception:
+                LOG.debug('Metadata not found at URL \'%s\'. '
+                          'Retrying in %s seconds' %
+                          CONF.openstack.metadata_base_url,
+                          self._RETRY_DELAY_SEC)
+                wait_until = time.clock() + self._RETRY_DELAY_SEC
+                while time.clock() < wait_until:
+                    pass
+                return False
 
     def _post_data(self, path, data):
         self._http_request(path, data=data)
